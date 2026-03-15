@@ -1,5 +1,5 @@
 # ds4200-final-project
-# 📊 Bank Term Deposit Analysis for Marketing Purpose
+# Bank Term Deposit Analysis for Marketing Purpose
 
 ---
 
@@ -19,12 +19,9 @@
 ├── data/
 │   └── Bank_Marketing_Dataset.csv
 ├── visualizations/
-│   ├── DS4200_visualizations.ipynb   # Altair charts (Python)
-│   ├── visualizations.html           # Exported Altair output
-│   └── d3/                           # D3.js visualization files
+│   
 ├── assets/
-│   └── images/
-├── design_notes.docx                 # Visualization design explanations
+│   
 └── README.md
 ```
 
@@ -54,16 +51,3 @@
 - [CD marketing strategies — BankBound](https://www.bankbound.com/blog/cd-marketing/)
 
 ---
-
-## 🚀 Running Locally
-```bash
-pip install pandas altair
-jupyter notebook DS4200_visualizations.ipynb
-```
-
-To view the webpage, open `index.html` in a browser or visit the GitHub Pages link below.
-
----
-
-🌐 **Live site:** *(add GitHub Pages URL once published)*  
-📅 DS4200 · Northeastern University · Spring 2026
