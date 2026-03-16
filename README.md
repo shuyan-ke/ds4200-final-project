@@ -18,9 +18,11 @@
 ├── index.html                        # Main project webpage
 ├── data/
 │   └── Bank_Marketing_Dataset.csv
+├── src/
+│   └── DS4200_visualizations.ipynb
 ├── visualizations/
-│   
-├── assets/
+│   ├── chart_edu.html                # Viz 1: Subscription rate by education (Altair)
+│   └── chart_age.html                # Viz 2: Age distribution by subscription (Altair)
 │   
 └── README.md
 ```
@@ -40,8 +42,9 @@
 1. Subscription rate by education level *(Altair bar chart)*
 2. Age distribution: subscribers vs. non-subscribers *(Altair area chart)*
 3. Subscription rate by job type *(bar chart)*
-4. Income distribution vs. subscription *(box plot)*
-5. Interactive customer segment explorer *(D3)*
+4. Income distribution vs. subscription  *(box plot)*
+5. Number of bank products vs. response propensity
+6. Investment portfolio value vs. subscription likelihood
 
 ---
 
