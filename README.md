@@ -23,7 +23,9 @@
 ├── visualizations/
 │   ├── chart_edu.html                # Viz 1: Subscription rate by education (Altair)
 │   └── chart_age.html                # Viz 2: Age distribution by subscription (Altair)
-│   
+│
+├── DS4200 Project Proposal.pdf
+│ 
 └── README.md
 ```
 
