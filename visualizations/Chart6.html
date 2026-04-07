@@ -77,8 +77,8 @@ const nodeColors = {
   'Standard':       '#3B82F6',
   'Premium':        '#1D4ED8',
   'Private':        '#7C3AED',
-  'Cellular':       '#D97706',
-  'Telephone':      '#ea33e6',
+  'Cellular':       '#dcac83',
+  'Telephone':      '#ffe7b5',
   'Subscribed':     '#1D9E75',
   'Not Subscribed': '#9ca3af'
 };
@@ -249,8 +249,8 @@ d3.select("#stats").html(
   "<div class='stat'><strong>" + fmt(total) + "</strong>Total clients</div>" +
   "<div class='stat'><strong style='color:#1D9E75'>" + fmt(subscribed) + "</strong>Subscribed</div>" +
   "<div class='stat'><strong style='color:#1D9E75'>" + pct(subscribed, total) + "</strong>Overall conversion</div>" +
-  "<div class='stat'><strong style='color:#D97706'>" + pct(cellularSubs, cellularTotal) + "</strong>Cellular conversion</div>" +
-  "<div class='stat'><strong style='color:#ea33e6'>" + pct(telSubs, telTotal) + "</strong>Telephone conversion</div>"
+  "<div class='stat'><strong style='color:#dcac83'>" + pct(cellularSubs, cellularTotal) + "</strong>Cellular conversion</div>" +
+  "<div class='stat'><strong style='color:#ffe7b5'>" + pct(telSubs, telTotal) + "</strong>Telephone conversion</div>"
 );
 </script>
 </body>
