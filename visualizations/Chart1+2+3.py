@@ -1,7 +1,7 @@
 import pandas as pd
 import altair as alt
 
-df = pd.read_csv("Bank_Marketing_Dataset.csv")
+df = pd.read_csv('../data/Bank_Marketing_Dataset.csv')
 
 alt.data_transformers.disable_max_rows()
 
