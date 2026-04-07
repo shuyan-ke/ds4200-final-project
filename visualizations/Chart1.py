@@ -5,29 +5,24 @@ df = pd.read_csv("Bank_Marketing_Dataset.csv")
 
 alt.data_transformers.disable_max_rows()
 
-#  Wealth tier scoring (Chart 3)
-df['IncS']  = pd.qcut(df['AnnualIncome'],             q=3, labels=[1, 2, 3]).astype(int)
-df['NWS']   = pd.qcut(df['NetWorth'],                 q=3, labels=[1, 2, 3]).astype(int)
-df['InvS']  = pd.qcut(df['InvestmentPortfolioValue'], q=3, labels=[1, 2, 3]).astype(int)
-df['Composite'] = df['IncS'] + df['NWS'] + df['InvS']
+# Normalize each column to 0-1
+df['income_norm'] = (df['AnnualIncome'] - df['AnnualIncome'].min()) / (df['AnnualIncome'].max() - df['AnnualIncome'].min())
+df['networth_norm'] = (df['NetWorth'] - df['NetWorth'].min()) / (df['NetWorth'].max() - df['NetWorth'].min())
+df['invest_norm'] = (df['InvestmentPortfolioValue'] - df['InvestmentPortfolioValue'].min()) / (df['InvestmentPortfolioValue'].max() - df['InvestmentPortfolioValue'].min())
 
-tier_map = {
-    3: '3 – Lowest Wealth',
-    4: '4 – Low',
-    5: '5 – Low-Mid',
-    6: '6 – Mid',
-    7: '7 – Mid-High',
-    8: '8 – High',
-    9: '9 – Highest Wealth',
-}
-tier_order = list(tier_map.values())
-df['WealthTier'] = df['Composite'].map(tier_map)
+# WealthScore = average of 3 normalized columns
+df['WealthScore'] = (df['income_norm'] + df['networth_norm'] + df['invest_norm']) / 3
+
+# Split into 4 equal groups
+tier_order = ['Low Wealth', 'Mid-Low', 'Mid-High', 'High Wealth']
+df['WealthTier'] = pd.qcut(df['WealthScore'], q=4, labels=tier_order)
+
 df['Subscribed'] = df['TermDepositSubscribed'].map({1: 'Yes', 0: 'No'})
 
 # Sample for Chart 2 scatter
 scatter_df = (
     df[['CallResponseScore', 'ResponsePropensity', 'Subscribed']]
-    .sample(n=4_000, random_state=42)
+    .sample(n=3_000, random_state=42)
     .copy()
 )
 
@@ -45,6 +40,7 @@ wealth_df['Rate'] = (wealth_df['Count'] / wealth_df['TierTotal'] * 100).round(1)
 
 click = alt.selection_point(fields=['Subscribed'])
 
+
 # Chart 1
 pie = (
     alt.Chart(pie_data)
@@ -55,7 +51,7 @@ pie = (
             click,
             alt.Color(
                 'Subscribed:N',
-                scale=alt.Scale(domain=['No', 'Yes'], range=['#94A3B8', '#F59E0B']),
+                scale=alt.Scale(domain=['No', 'Yes'], range=['#9ca3af', '#1D9E75']),
                 legend=alt.Legend(title='Subscribed'),
             ),
             alt.value('#ddd'),
@@ -72,7 +68,7 @@ pie = (
 
 pie_labels = (
     alt.Chart(pie_data)
-    .mark_text(radius=165, fontSize=13, fontWeight='bold', lineBreak='\n', align='center')
+    .mark_text(radius=200, fontSize=13, fontWeight='bold', lineBreak='\n', align='center')
     .encode(
         theta=alt.Theta('Count:Q', stack=True),
         text='Label:N',
@@ -87,7 +83,7 @@ pie_labels = (
 chart1 = (
     (pie + pie_labels)
     .properties(
-        width=350, height=350,
+        width=520, height=420,
         title=alt.Title(
             text='Chart 1 — Subscription Breakdown',
             subtitle='Click a slice to filter Charts 2 & 3. Double click background to reset.',
@@ -103,7 +99,7 @@ chart2 = (
         x=alt.X('CallResponseScore:Q', title='Call Response Score',
                  scale=alt.Scale(zero=False)),
         y=alt.Y('ResponsePropensity:Q', title='Response Propensity',
-                 scale=alt.Scale(zero=False)),
+                 scale=alt.Scale(domain=[0, 0.62])),
         color=alt.condition(
             click,
             alt.Color('Subscribed:N',
@@ -120,10 +116,10 @@ chart2 = (
         order=alt.Order('Subscribed:N', sort='descending'),
     )
     .properties(
-        width=460, height=340,
+        width=620, height=420,
         title=alt.Title(
             text='Chart 2 — Call Response vs. Propensity',
-            subtitle='n = 4,000 sampled',
+            subtitle='n = 3,000 sampled',
         ),
     )
 )
@@ -134,7 +130,7 @@ chart3 = (
     .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
     .encode(
         x=alt.X('WealthTier:N', sort=tier_order,
-                 axis=alt.Axis(title='Wealth Tier', labelAngle=-20, labelLimit=200)),
+                 axis=alt.Axis(title='Wealth Tier', labelAngle=0, labelLimit=200)),
         y=alt.Y('Count:Q', axis=alt.Axis(title='Customer Count', format=',d')),
         color=alt.condition(
             click,
@@ -153,7 +149,7 @@ chart3 = (
         ],
     )
     .properties(
-        width=460, height=340,
+        width=620, height=420,
         title=alt.Title(
             text='Chart 3 — Wealth Segmentation',
             subtitle='Composite score (Income + Net Worth + Investment)',
@@ -164,13 +160,17 @@ chart3 = (
 # Dashboard
 dashboard = (
     alt.vconcat(
-        chart1,
+        alt.hconcat(
+            alt.Chart(pd.DataFrame({'x': []})).mark_point(opacity=0).properties(width=400, height=10),
+            chart1,
+            alt.Chart(pd.DataFrame({'x': []})).mark_point(opacity=0).properties(width=140, height=10),
+        ),
         alt.hconcat(chart2, chart3),
     )
     .resolve_scale(color='shared')
     .configure_view(strokeWidth=0)
     .configure_axis(gridColor='#eee')
-    .configure_concat(spacing=25)
+    .configure_concat(spacing=35)
 )
 
 dashboard.show()
