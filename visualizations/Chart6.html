@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Chart 6 — Which Contact Path Converts Best?</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f9f9f7;
+      padding: 36px 48px;
+      color: #1a1a1a;
+    }
+    .chart-title { font-size: 18px; font-weight: 600; color: #111; }
+    .chart-subtitle { font-size: 13px; color: #666; margin-top: 4px; margin-bottom: 24px; }
+    .layer-labels {position: relative; max-width: 1200px; height: 20px; margin-bottom: 6px;}
+    .layer-label {position: absolute; font-size: 11px; font-weight: 600; color: #999; letter-spacing: 0.06em; text-transform: uppercase;}
+    .layer-label:nth-child(1) { left: 0%; }
+    .layer-label:nth-child(2) { left: 52%; }
+    .layer-label:nth-child(3) { left: 86%; }
+    #chart { position: relative; }
+    .tooltip {
+      position: absolute; background: white;
+      border: 1px solid #ddd; border-radius: 8px;
+      padding: 10px 14px; font-size: 12px;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.15s;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      z-index: 10; min-width: 180px;
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip-title { font-weight: 600; font-size: 13px; color: #111; margin-bottom: 6px; }
+    .tooltip-row { display: flex; justify-content: space-between; gap: 16px; color: #555; margin-bottom: 3px; }
+    .tooltip-row span:last-child { font-weight: 500; color: #111; }
+    .legend { display: flex; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #555; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .stats-bar {
+      display: flex; gap: 32px; margin-top: 20px;
+      padding-top: 16px; border-top: 1px solid #e8e8e8; flex-wrap: wrap;
+    }
+    .stat { font-size: 12px; color: #666; }
+    .stat strong { font-size: 15px; font-weight: 600; color: #111; display: block; }
+    .legend { display: flex; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+    .legend-title {font-size: 11px; font-weight: 600; color: #777; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;}
+    .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #555; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div class="chart-title">Chart 6 — Which Contact Path Converts Best?</div>
+<div class="chart-subtitle">
+  Flow: Customer Segment &rarr; Contact Channel &rarr; Subscription Outcome &nbsp;&middot;&nbsp;
+</div>
+
+<div class="layer-labels">
+  <span class="layer-label">Customer Segment</span>
+  <span class="layer-label">Contact Channel</span>
+  <span class="layer-label">Outcome</span>
+</div>
+
+<div id="chart">
+  <div class="tooltip" id="tooltip"></div>
+</div>
+
+<div class="legend" id="legend"></div>
+<div class="stats-bar" id="stats"></div>
+
+<script>
+const GRAPH = {"nodes": [{"name": "Mass"}, {"name": "Cellular"}, {"name": "Telephone"}, {"name": "Premium"}, {"name": "Private"}, {"name": "Standard"}, {"name": "Not Subscribed"}, {"name": "Subscribed"}], "links": [{"source": "Mass", "target": "Cellular", "value": 36883}, {"source": "Mass", "target": "Telephone", "value": 8152}, {"source": "Premium", "target": "Cellular", "value": 14009}, {"source": "Premium", "target": "Telephone", "value": 3062}, {"source": "Private", "target": "Cellular", "value": 2449}, {"source": "Private", "target": "Telephone", "value": 550}, {"source": "Standard", "target": "Cellular", "value": 28551}, {"source": "Standard", "target": "Telephone", "value": 6344}, {"source": "Cellular", "target": "Not Subscribed", "value": 56398}, {"source": "Cellular", "target": "Subscribed", "value": 25494}, {"source": "Telephone", "target": "Not Subscribed", "value": 13581}, {"source": "Telephone", "target": "Subscribed", "value": 4527}]};
+
+const nodeColors = {
+  'Mass':           '#93C5FD',
+  'Standard':       '#3B82F6',
+  'Premium':        '#1D4ED8',
+  'Private':        '#7C3AED',
+  'Cellular':       '#D97706',
+  'Telephone':      '#ea33e6',
+  'Subscribed':     '#1D9E75',
+  'Not Subscribed': '#9ca3af'
+};
+
+const margin = { top: 10, right: 170, bottom: 10, left: 170 };
+const width  = Math.min(window.innerWidth - 96, 1200) - margin.left - margin.right;
+const height = 500;
+
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("width",  width  + margin.left + margin.right)
+  .attr("height", height + margin.top  + margin.bottom)
+  .append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+const sankey = d3.sankey()
+  .nodeId(d => d.name)
+  .nodeWidth(22)
+  .nodePadding(28)
+  .extent([[0, 0], [width + 50, height]]);
+
+const graph = sankey({
+  nodes: GRAPH.nodes.map(d => Object.assign({}, d)),
+  links: GRAPH.links.map(d => Object.assign({}, d))
+});
+
+const nodes = graph.nodes;
+const links = graph.links;
+
+const tooltip = d3.select("#tooltip");
+function fmt(n) { return n.toLocaleString(); }
+function pct(a, b) { return (a / b * 100).toFixed(1) + "%"; }
+
+const nodeTotal = {};
+nodes.forEach(n => { nodeTotal[n.name] = n.value; });
+
+// Links
+svg.append("g").attr("fill","none")
+  .selectAll(".link")
+  .data(links)
+  .enter().append("path")
+  .attr("class","link")
+  .attr("d", d3.sankeyLinkHorizontal())
+  .attr("stroke", d => nodeColors[d.source.name] + "88")
+  .attr("stroke-width", d => Math.max(1, d.width))
+  .style("cursor","pointer")
+  .on("mouseover", function(event, d) {
+    d3.select(this).attr("stroke", nodeColors[d.source.name] + "dd");
+    tooltip.classed("visible", true).html(
+      "<div class='tooltip-title'>" + d.source.name + " &rarr; " + d.target.name + "</div>" +
+      "<div class='tooltip-row'><span>Clients</span><span>" + fmt(d.value) + "</span></div>" +
+      "<div class='tooltip-row'><span>Share of " + d.source.name + "</span><span>" + pct(d.value, nodeTotal[d.source.name]) + "</span></div>" +
+      "<div class='tooltip-row'><span>Share of " + d.target.name + "</span><span>" + pct(d.value, nodeTotal[d.target.name]) + "</span></div>"
+    );
+  })
+  .on("mousemove", function(event) {
+    const box = document.getElementById("chart").getBoundingClientRect();
+    tooltip.style("left", (event.clientX - box.left + 16) + "px")
+           .style("top",  (event.clientY - box.top  - 10) + "px");
+  })
+  .on("mouseleave", function(event, d) {
+    d3.select(this).attr("stroke", nodeColors[d.source.name] + "88");
+    tooltip.classed("visible", false);
+  });
+
+// Node rects
+const nodeG = svg.append("g")
+  .selectAll(".node")
+  .data(nodes)
+  .enter().append("g")
+  .attr("class","node");
+
+nodeG.append("rect")
+  .attr("x", d => d.x0)
+  .attr("y", d => d.y0)
+  .attr("width",  d => d.x1 - d.x0)
+  .attr("height", d => Math.max(2, d.y1 - d.y0))
+  .attr("fill",   d => nodeColors[d.name] || "#aaa")
+  .attr("rx", 3)
+  .on("mouseover", function(event, d) {
+    tooltip.classed("visible", true).html(
+      "<div class='tooltip-title'>" + d.name + "</div>" +
+      "<div class='tooltip-row'><span>Total clients</span><span>" + fmt(d.value) + "</span></div>" +
+      "<div class='tooltip-row'><span>Share of all</span><span>" + pct(d.value, 100000) + "</span></div>"
+    );
+  })
+  .on("mousemove", function(event) {
+    const box = document.getElementById("chart").getBoundingClientRect();
+    tooltip.style("left", (event.clientX - box.left + 16) + "px")
+           .style("top",  (event.clientY - box.top  - 10) + "px");
+  })
+  .on("mouseleave", function() { tooltip.classed("visible", false); });
+
+// Node name labels
+nodeG.append("text")
+  .attr("x", d => d.x0 < width / 2 ? d.x0 - 10 : d.x1 + 10)
+  .attr("y", d => (d.y0 + d.y1) / 2 - 7)
+  .attr("dy", "0.35em")
+  .attr("text-anchor", d => d.x0 < width / 2 ? "end" : "start")
+  .attr("font-size", "12px")
+  .attr("font-weight", "500")
+  .attr("fill", "#333")
+  .text(d => d.name);
+
+// Node value labels
+nodeG.append("text")
+  .attr("x", d => d.x0 < width / 2 ? d.x0 - 10 : d.x1 + 10)
+  .attr("y", d => (d.y0 + d.y1) / 2 + 9)
+  .attr("dy", "0.35em")
+  .attr("text-anchor", d => d.x0 < width / 2 ? "end" : "start")
+  .attr("font-size", "11px")
+  .attr("fill", "#999")
+  .text(d => fmt(d.value));
+
+// Legend
+const legendGroups = [
+  {
+    title: "Customer Segment",
+    items: [
+      { name: 'Mass', color: nodeColors['Mass'] },
+      { name: 'Standard', color: nodeColors['Standard'] },
+      { name: 'Premium', color: nodeColors['Premium'] },
+      { name: 'Private', color: nodeColors['Private'] },
+    ]
+  },
+  {
+    title: "Last Contact Channel",
+    items: [
+      { name: 'Cellular', color: nodeColors['Cellular'] },
+      { name: 'Telephone', color: nodeColors['Telephone'] },
+    ]
+  },
+  {
+    title: "Outcome",
+    items: [
+      { name: 'Subscribed', color: nodeColors['Subscribed'] },
+      { name: 'Not Subscribed', color: nodeColors['Not Subscribed'] },
+    ]
+  }
+];
+
+const legend = d3.select("#legend");
+
+legendGroups.forEach(group => {
+  const groupDiv = legend.append("div").attr("class", "legend-group");
+  groupDiv.append("div").attr("class", "legend-title").text(group.title);
+
+  const row = groupDiv.append("div").attr("class", "legend-row");
+  group.items.forEach(item => {
+    const div = row.append("div").attr("class", "legend-item");
+    div.append("div")
+      .attr("class", "legend-swatch")
+      .style("background", item.color);
+    div.append("span").text(item.name);
+  });
+});
+
+// Stats
+const subscribed    = nodeTotal['Subscribed']     || 0;
+const notSubscribed = nodeTotal['Not Subscribed'] || 0;
+const total         = subscribed + notSubscribed;
+const cellularSubs  = links.find(l => l.source.name === 'Cellular'  && l.target.name === 'Subscribed')?.value || 0;
+const telSubs       = links.find(l => l.source.name === 'Telephone' && l.target.name === 'Subscribed')?.value || 0;
+const cellularTotal = nodeTotal['Cellular']  || 1;
+const telTotal      = nodeTotal['Telephone'] || 1;
+
+d3.select("#stats").html(
+  "<div class='stat'><strong>" + fmt(total) + "</strong>Total clients</div>" +
+  "<div class='stat'><strong style='color:#1D9E75'>" + fmt(subscribed) + "</strong>Subscribed</div>" +
+  "<div class='stat'><strong style='color:#1D9E75'>" + pct(subscribed, total) + "</strong>Overall conversion</div>" +
+  "<div class='stat'><strong style='color:#D97706'>" + pct(cellularSubs, cellularTotal) + "</strong>Cellular conversion</div>" +
+  "<div class='stat'><strong style='color:#ea33e6'>" + pct(telSubs, telTotal) + "</strong>Telephone conversion</div>"
+);
+</script>
+</body>
+</html>
