@@ -83,7 +83,7 @@ pie_labels = (
 chart1 = (
     (pie + pie_labels)
     .properties(
-        width=520, height=420,
+        width=480, height=480,
         title=alt.Title(
             text='Chart 1 — Subscription Breakdown',
             subtitle='Click a slice to filter Charts 2 & 3. Double click background to reset.',
@@ -116,7 +116,7 @@ chart2 = (
         order=alt.Order('Subscribed:N', sort='descending'),
     )
     .properties(
-        width=620, height=420,
+        width=580, height=480,
         title=alt.Title(
             text='Chart 2 — Call Response vs. Propensity',
             subtitle='n = 3,000 sampled',
@@ -149,7 +149,7 @@ chart3 = (
         ],
     )
     .properties(
-        width=620, height=420,
+        width=580, height=480,
         title=alt.Title(
             text='Chart 3 — Wealth Segmentation',
             subtitle='Composite score (Income + Net Worth + Investment)',

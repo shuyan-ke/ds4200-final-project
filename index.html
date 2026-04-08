@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Term Deposit Analysis</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+
+    <h1>Bank Term Deposit Analysis for Marketing Purpose</h1>
+    <p class="authors">Shelley Yang &nbsp;·&nbsp; Tam Vu &nbsp;·&nbsp; Shuyan Ke</p>
+    <p class="course">DS4200 · Northeastern University · Spring 2026</p>
+
+    <h3>Overall Introduction</h3>
+    <p>
+        A bank wants to understand their customer base to see what type of customers 
+        would be willing to subscribe to a term deposit. We want to know the customers' 
+        demographics to identify which age group, profession, and educational background 
+        typically would subscribe, so that the bank will know who to target.
+    </p>
+    <p>
+        This topic is compelling as it demonstrates how predictive analytics bridges a 
+        bank's need for stable capital and a customer's pursuit of long-term financial 
+        security. Ultimately, this project will reveal the underlying patterns of how 
+        different segments of the population prioritize savings, allowing the bank to 
+        optimize resources and better connect with consumers.
+    </p>
+    <div style="text-align: center; margin: 20px 0;">
+        <img src="Certificate_of_deposit.jpg" width="60%" alt="Certificate of Deposit">
+        <p style="font-size: 13px; color: #999; margin-top: 6px;">A sample Certificate of Deposit document</p>
+    </div>
+
+    <h3>Introduction to the Data</h3>
+    <p>
+        The data used in this research were sourced from Kaggle and consist of 100,000 
+        observations related to banking customers. In terms of the variables used in the 
+        data, there are 45 of them, among which personal traits like age, gender, occupation,
+        annual income, and level of education; financial metrics, such as net worth and 
+        investment portfolio value; campaign variables like response score, marketing score,
+        and the number of contacts. Among all these variables, the most 
+        important one is called TermDepositSubscribed, which indicates if the customer 
+        subscribed to the term deposit or not.
+    </p>
+    <p>
+        In terms of the data type, it includes both categorical variables like job title, 
+        educational level, and type of contacts, as well as continuous variables like annual 
+        income and response propensity, which makes the data appropriate for multivariate 
+        analysis. Moreover, for better visualizations, some additional variables were 
+        created by the researchers themselves, including wealth class and age range.
+    </p>
+
+
+    <h3>Subscription Overview, Campaign Behavior & Wealth Segmentation</h3>
+    <p>
+        The dashboard below provides an entry point into the data. The pie chart shows 
+        the overall subscription split. Click a slice to filter Charts 2 and 3.
+    </p>
+    <div class="viz-container" style="height: 720px; overflow: hidden;">
+        <iframe src="visualizations/Chart1+2+3.html" 
+            style="width: 150%; height: 1000px; transform: scale(0.68); 
+            transform-origin: top left; border: none;">
+        </iframe>
+    </div>
+    <p class="takeaway">
+        In total, 30% of customers opted for the term deposit offer, suggesting satisfactory 
+        success rates for the marketing campaign but a high level of room for improvement. 
+        About 70% were unconverted, which may imply that existing targeting efforts may not 
+        have targeted the relevant customers. The analysis of marketing campaign behavior 
+        suggests that higher call response rates are strongly linked to the chance of 
+        converting customers, with the most evident clustering taking place in the middle 
+        ranges of response rates, thereby implying a large share of unexploited opportunities. 
+        In terms of wealth levels, it is obvious that conversion rates progressively improve
+        from low to high wealth classes.
+    </p>
+
+    <h3>Subscription Rate by Age Group and Job Title</h3>
+    <div class="side">
+        <div class="text">
+            <p>
+                The heatmap reveals which age and profession combinations are most likely 
+                to subscribe. Darker cells indicate higher subscription rates. Hover over 
+                any cell to see the exact percentage.
+            </p>
+            <p class="takeaway">
+            The heatmap shows different patterns regarding age and occupation variables. According 
+            to the information presented, the darkest colors in the table refer to management and 
+            entrepreneur occupation classes throughout all age groups, whose subscription rates vary 
+            from 38% to 46% — higher than the average level of 30%. The self-employed occupation 
+            category also appears to be above average for most age groups. On the contrary, students, 
+            retired, and blue-collar workers have comparatively lighter colors regardless of their age, 
+            hence proving that occupation is a better determinant of a client's performance than age. 
+            The highest subscription rate appears in the 30s–40s age group combined with management 
+            occupation class at approximately 43–44%, making mid-aged professionals the most profitable 
+            customer segment. One particular exception can be found for unemployed clients aged 60+, 
+            who show a relatively higher rate than expected.
+            </p>
+        </div>
+        <div class="chart">
+            <iframe src="visualizations/Chart4.html" height="550px" width="100%" 
+            frameborder="0">
+            </iframe>
+        </div>
+    </div>
+
+    <h3>Marketing Strategy Recommendation</h3>
+    <p>
+        The bubble chart identifies the most actionable customer segments for 
+        the next campaign, combining marketing score, response propensity, and 
+        wealth profile into a single view.
+    </p>
+    <div class="full">
+        <iframe src="visualizations/Chart5.html" height="850px" width="100%" frameborder="0 "></iframe>
+    </div>
+    <p class="takeaway">
+        The bubble plot considers various factors, such as marketing score, response rate, 
+        and wealth level, and provides an effective visualization technique. The ideal target 
+        customers belong to the top-right quadrant where they have high scores in the marketing 
+        category and low scores in the risk factor, while their response rates are relatively 
+        high (38–46%), and they include Management and Entrepreneur types who belong to 
+        Premium/Private customer groups. Such customers have high responsiveness and adequate 
+        financial ability. There is another group of customers who have good potential, but they 
+        belong to the Technician, Admin, and Self-employed types with above-average response 
+        rates (31–32%). However, students, blue-collar workers, and retired people are mostly 
+        located in the bottom-left quadrant since their response rates are relatively low along 
+        with poor financial readiness and engagement.
+    </p>
+
+    <h3>Campaign Path: Which Contact Method Led to Subscriptions?</h3>
+    <p>
+        The Sankey diagram traces the full campaign flow — from customer segment 
+        to contact channel to final outcome. Hover over any flow or node to see 
+        exact counts and percentages.
+    </p>
+    <div class="full">
+        <iframe src="visualizations/Chart6.html" height="900px"></iframe>
+    </div>
+    <p class="takeaway">
+        The Sankey diagram maps out the entire process of customer conversion from the segment 
+        to the channel of contact through to the final step of subscribing. Cellular marketing 
+        forms the largest percentage of contact and generates a higher conversion rate compared 
+        to telephone, hence is the dominant channel. The Mass and Standard segments form the 
+        majority of customer traffic but have low conversion rates, while the Premium and Private 
+        segments — which form a minority — have higher conversion rates despite the mode of 
+        contact used. This shows that the segment and wealth profile have more weight in 
+        determining conversion than the channel itself. Though telephone plays an important 
+        role in accessing specific segments, it does not need to be the major investment area. 
+        In general, the diagram suggests that focusing on high-wealth, high-conversion rate 
+        segments via cellular outreach will be most effective.
+    </p>
+
+    <h3>Summary and Additional Work</h3>
+    <p>
+        Of the 100,000 customers analyzed, only 30% subscribed to a long-term deposit, 
+        signifying moderate campaign effectiveness with room to optimization. Subscription
+         behavior is driven by a combination of three factors: (1) financial capacity, 
+         where conversion climbs steadily from 20.5% in the lowest wealth tier to 47.0% 
+         in the highest; (2) engagement quality, where higher call response scores and 
+         response propensity are positively associated with subscription likelihood; 
+         and (3) demographic profile, where the 30-50 age group dominates the subscriber 
+         base and professionals in management entrepreneurial roles convert at the highest 
+         rates (38-46%). In contrast, conversion rates for students, blue-collar workers, 
+         and retirees fall below 30%. Cellular outreach is shown as the strongest channel, 
+         combining both the highest volume and outreach rate.
+    </p>
+    <p>
+        To improve future campaigns, four strategies are recommended. First, target 
+        high-value customers by focusing campaign resources on management and entrepreneur 
+        titles in mid-to-high wealth tiers aged 30-50, as shown by high marketing scores and 
+        response propensity to maximize conversion. Second, expand into scalable segments 
+        such as technicians, administrators, and the self-employed, who convert at an above 
+        average 31-32% rate and represent a large, under-optimized population that better 
+        messaging could unlock. Third, optimizing the contact strategy by making cellular 
+        the primary channel and prioritizing high-propensity customers and customer segments 
+        within it for reach and conversion. Lastly, it would be optimal to reduce low-return 
+        targeting of students, blue-collar, and retired bases, where conversion rates, 
+        engagement, and financial readiness are consistently low, and redirect that budget 
+        towards the higher-yield group identified.
+    </p>
+
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://www.independentbanker.org/w/why-community-banks-are-revamping-their-cd-strategies">Why community banks are revamping their CD strategies — Independent Banker</a></li>
+        <li><a href="https://www.bankbound.com/blog/cd-marketing/">CD marketing strategies — BankBound</a></li>
+    </ul>
+
+</div>
+</body>
+</html>
