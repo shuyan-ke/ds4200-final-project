@@ -5,11 +5,7 @@
 
 ## 👥 Team
 
-| Name | Responsibilities |
-|------|-----------------|
-| Shelley Yang | Introduction, data overview, writeup |
-| Tam Vu | Reference research, HTML/CSS/JS development, content review |
-| Shuyan Ke | GitHub setup, static images, visualization development |
+# Name: Shelley Yang, Tam Vu, Shuyan Ke
 
 ---
 
@@ -18,14 +14,18 @@
 ├── index.html                        # Main project webpage
 ├── data/
 │   └── Bank_Marketing_Dataset.csv
-├── src/
-│   └── DS4200_visualizations.ipynb
+├── scripts/
+│   ├── Chart1+2+3.py
+│   └── Chart4.ipynb
 ├── visualizations/
-│   ├── chart_edu.html                # Viz 1: Subscription rate by education (Altair)
-│   └── chart_age.html                # Viz 2: Age distribution by subscription (Altair)
-│
-├── DS4200 Project Proposal.pdf
-│ 
+│   ├── Chart1+2+3.html
+│   ├── Chart4.html
+│   ├── Chart5.html                 
+│   └── Chart6.html              # Chart 5 and 6 are used D3  
+├── Certificate_of_deposit.jpg
+├── Design notes.txt
+├── index.html              # Main website page
+├── style.css
 └── README.md
 ```
 
@@ -41,12 +41,10 @@
 
 ## 📈 Visualizations
 
-1. Subscription rate by education level *(Altair bar chart)*
-2. Age distribution: subscribers vs. non-subscribers *(Altair area chart)*
-3. Subscription rate by job type *(bar chart)*
-4. Income distribution vs. subscription  *(box plot)*
-5. Number of bank products vs. response propensity
-6. Investment portfolio value vs. subscription likelihood
+- `Chart1+2+3.html` — Subscription overview (pie), campaign behavior (scatter), and wealth segmentation (bar) — linked dashboard (Altair)
+- `Chart4.html` — Subscription rate by age group and job title (Altair heatmap)
+- `Chart5.html` — Marketing strategy recommendation (bubble chart, D3)
+- `Chart6.html` — Campaign path: which contact method led to subscriptions (Sankey diagram, D3)
 
 ---
 
