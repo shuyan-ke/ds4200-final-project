@@ -5,7 +5,7 @@
 
 ## 👥 Team
 
-# Name: Shelley Yang, Tam Vu, Shuyan Ke
+### Name: Shelley Yang, Tam Vu, Shuyan Ke
 
 ---
 
