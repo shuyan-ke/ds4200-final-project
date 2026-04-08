@@ -23,7 +23,7 @@
 │   ├── Chart5.html                 
 │   └── Chart6.html              # Chart 5 and 6 are used D3  
 ├── Certificate_of_deposit.jpg
-├── Design notes.txt
+├── Design notes.docx
 ├── style.css
 └── README.md
 ```
