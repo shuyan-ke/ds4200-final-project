@@ -24,7 +24,6 @@
 │   └── Chart6.html              # Chart 5 and 6 are used D3  
 ├── Certificate_of_deposit.jpg
 ├── Design notes.txt
-├── index.html              # Main website page
 ├── style.css
 └── README.md
 ```
