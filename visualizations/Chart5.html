@@ -71,6 +71,10 @@
   <div><label>Risk</label>
     <select id="filter-risk"><option value="All">All Risk Levels</option></select>
   </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <label style="white-space:nowrap;">Regression lines</label>
+    <input type="checkbox" id="toggle-regression" checked style="cursor:pointer;width:14px;height:14px;">
+  </div>
   <div><label>Job</label>
     <select id="filter-job"><option value="All">All Jobs</option></select>
   </div>
@@ -83,6 +87,14 @@
   </div>
   <div class="legend-item">
     <div class="legend-dot" style="background:#9ca3af;"></div>Not Subscribed (No)
+  </div>
+  <div class="legend-item" style="gap:5px;">
+    <svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#1D9E75" stroke-width="2" stroke-dasharray="5,3"/></svg>
+    <span>Trend (Yes)</span>
+  </div>
+  <div class="legend-item" style="gap:5px;">
+    <svg width="22" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#9ca3af" stroke-width="2" stroke-dasharray="5,3"/></svg>
+    <span>Trend (No)</span>
   </div>
   <div class="size-legend">
     <span>Wealth:</span>
@@ -121,8 +133,11 @@ const svg = d3.select("#chart-container")
 const tooltip = d3.select("#tooltip");
 
 // Populate all dropdowns dynamically from data
-const segments = [...new Set(DATA.map(d => d.CustomerSegment))].sort();
-const risks    = [...new Set(DATA.map(d => d.RiskRating))].sort();
+const segmentOrder = ["Mass", "Standard", "Premium", "Private"];
+
+const segments = [...new Set(DATA.map(d => d.CustomerSegment))]
+  .sort((a, b) => segmentOrder.indexOf(a) - segmentOrder.indexOf(b));
+const risks    = ["Low", "Medium", "High"].filter(v => [...new Set(DATA.map(d => d.RiskRating))].includes(v));
 const jobs     = [...new Set(DATA.map(d => d.JobTitle))].sort();
 
 const segSel = d3.select("#filter-segment");
@@ -200,6 +215,58 @@ svg.append("text").attr("class","axis-label")
   .attr("transform","rotate(-90)").attr("x",-height/2).attr("y",-54)
   .attr("text-anchor","middle").text("Response Propensity");
 
+const regressionG = svg.append("g").attr("class","regression-lines");
+
+// Linear regression helper
+function linReg(data) {
+  const n = data.length;
+  if (n < 2) return null;
+  let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+  data.forEach(d => { sumX += d[0]; sumY += d[1]; sumXY += d[0]*d[1]; sumXX += d[0]*d[0]; });
+  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+  return { slope, intercept };
+}
+
+function drawRegression(filtered) {
+  regressionG.selectAll("*").remove();
+  if (!document.getElementById("toggle-regression").checked) return;
+
+  const xMin = xScale.domain()[0];
+  const xMax = xScale.domain()[1];
+
+  ["Yes", "No"].forEach(sub => {
+    const pts = filtered
+      .filter(d => d.TermDepositSubscribed === sub)
+      .map(d => [d.MarketingScore, d.ResponsePropensity]);
+    const reg = linReg(pts);
+    if (!reg) return;
+
+    const y1 = reg.slope * xMin + reg.intercept;
+    const y2 = reg.slope * xMax + reg.intercept;
+    const color = sub === "Yes" ? COLOR_YES : COLOR_NO;
+
+    regressionG.append("line")
+      .attr("x1", xScale(xMin)).attr("y1", yScale(y1))
+      .attr("x2", xScale(xMax)).attr("y2", yScale(y2))
+      .attr("stroke", color)
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "7,4")
+      .attr("opacity", 0.85);
+
+    // Label at right end
+    const labelX = xScale(xMax) - 6;
+    const labelY = yScale(y2);
+    regressionG.append("text")
+      .attr("x", labelX).attr("y", labelY - 5)
+      .attr("text-anchor", "end")
+      .attr("font-size", "10px")
+      .attr("fill", color)
+      .attr("font-weight", "600")
+      .text("trend (" + sub + ")");
+  });
+}
+
 const bubblesG = svg.append("g");
 
 function drawBubbles(filtered) {
@@ -246,6 +313,8 @@ function drawBubbles(filtered) {
       tooltip.classed("visible",false);
     });
 
+  drawRegression(filtered);
+
   // Stats
   const total = filtered.length;
   const yes   = filtered.filter(d => d.TermDepositSubscribed==="Yes").length;
@@ -281,8 +350,11 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   document.getElementById("filter-segment").value = "All";
   document.getElementById("filter-risk").value = "All";
   document.getElementById("filter-job").value = "All";
+  document.getElementById("toggle-regression").checked = true;
   applyFilters();
 });
+
+document.getElementById("toggle-regression").addEventListener("change", applyFilters);
 
 drawBubbles(DATA);
 </script>
