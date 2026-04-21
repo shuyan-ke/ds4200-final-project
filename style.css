@@ -66,12 +66,12 @@ p {
 }
 
 .side .text {
-    flex: 0.8;
+    flex: 0.7;
     min-width: 0;
 }
 
 .side .chart {
-    flex: 2.4;
+    flex: 2.5;
     min-width: 0;
 }
 
