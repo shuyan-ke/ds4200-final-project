@@ -60,9 +60,9 @@ p {
 
 .side {
     display: flex;
-    gap: 32px;
+    gap: 30px;
     align-items: flex-start;
-    margin: 20px 0;
+    margin: 18px 0;
 }
 
 .side .text {
@@ -71,7 +71,7 @@ p {
 }
 
 .side .chart {
-    flex: 1.5;
+    flex: 2.4;
     min-width: 0;
 }
 
@@ -113,6 +113,16 @@ code {
     border-radius: 3px;
     font-size: 14px;
     color: #c7254e;
+}
+
+ul {
+    padding-left: 20px;
+    margin-bottom: 16px;
+}
+
+ul li {
+    margin-bottom: 8px;
+    color: #333;
 }
 
 ul {
