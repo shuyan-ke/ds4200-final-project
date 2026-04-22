@@ -27,6 +27,16 @@
       border-radius: 6px; background: white; color: #555; cursor: pointer;
     }
     .reset-btn:hover { background: #f0f0f0; }
+    .zoom-controls {
+      display: flex; align-items: center; gap: 6px;
+      margin-left: auto; flex-wrap: wrap;
+    }
+    .zoom-btn {
+      width: 28px; height: 28px; border: 1px solid #ccc; border-radius: 6px;
+      background: white; color: #444; cursor: pointer; font-size: 16px; line-height: 1;
+    }
+    .zoom-btn:hover { background: #f0f0f0; }
+    .zoom-hint { font-size: 11px; color: #777; white-space: nowrap; }
     .legend-row { display: flex; gap: 24px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #444; }
     .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
@@ -79,6 +89,12 @@
     <select id="filter-job"><option value="All">All Jobs</option></select>
   </div>
   <button class="reset-btn" id="reset-btn">Reset filters</button>
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoom-out" type="button" aria-label="Zoom out">-</button>
+    <button class="zoom-btn" id="zoom-in" type="button" aria-label="Zoom in">+</button>
+    <button class="reset-btn" id="reset-zoom" type="button">Reset view</button>
+    <span class="zoom-hint">Scroll to zoom, drag to pan</span>
+  </div>
 </div>
 
 <div class="legend-row">
@@ -123,11 +139,13 @@ const margin = { top: 30, right: 40, bottom: 60, left: 70 };
 const width  = Math.min(window.innerWidth - 80, 1000) - margin.left - margin.right;
 const height = 560 - margin.top - margin.bottom;
 
-const svg = d3.select("#chart-container")
+const svgRoot = d3.select("#chart-container")
   .append("svg")
-  .attr("width",  width  + margin.left + margin.right)
-  .attr("height", height + margin.top  + margin.bottom)
-  .append("g")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .style("touch-action", "none");
+
+const svg = svgRoot.append("g")
   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 const tooltip = d3.select("#tooltip");
@@ -163,49 +181,32 @@ const rScale = d3.scaleSqrt()
   .domain([d3.min(DATA, d => d.WealthScore), d3.max(DATA, d => d.WealthScore)])
   .range([2, 12]);
 
-// Grid
-svg.append("g")
-  .call(d3.axisLeft(yScale).ticks(6).tickSize(-width).tickFormat(""))
-  .call(g => g.select(".domain").remove())
-  .call(g => g.selectAll(".tick line").attr("stroke","#ebebeb").attr("stroke-dasharray","3,3"));
+const xBaseScale = xScale.copy();
+const yBaseScale = yScale.copy();
 
-svg.append("g").attr("transform","translate(0," + height + ")")
-  .call(d3.axisBottom(xScale).ticks(7).tickSize(-height).tickFormat(""))
-  .call(g => g.select(".domain").remove())
-  .call(g => g.selectAll(".tick line").attr("stroke","#ebebeb").attr("stroke-dasharray","3,3"));
+const defs = svgRoot.append("defs");
+defs.append("clipPath")
+  .attr("id", "chart-clip")
+  .append("rect")
+  .attr("x", margin.left)
+  .attr("y", margin.top)
+  .attr("width", width)
+  .attr("height", height);
 
-// Axes
-svg.append("g").attr("class","x-axis").attr("transform","translate(0," + height + ")")
-  .call(d3.axisBottom(xScale).ticks(7).tickFormat(d3.format(".2f")))
-  .call(g => g.select(".domain").attr("stroke","#ddd"))
-  .call(g => g.selectAll(".tick line").attr("stroke","#ddd"))
-  .call(g => g.selectAll(".tick text").attr("fill","#666").attr("font-size","11px"));
+const yGridG = svg.append("g");
+const xGridG = svg.append("g").attr("transform", "translate(0," + height + ")");
+const xAxisG = svg.append("g").attr("class", "x-axis").attr("transform", "translate(0," + height + ")");
+const yAxisG = svg.append("g").attr("class", "y-axis");
+const referenceG = svg.append("g").attr("clip-path", "url(#chart-clip)");
+const crosshairG = referenceG.append("g").attr("class", "crosshairs");
+const quadrantG = referenceG.append("g").attr("class", "quadrants");
+const regressionG = referenceG.append("g").attr("class", "regression-lines");
+const bubblesG = referenceG.append("g").attr("class", "bubbles");
 
-svg.append("g").attr("class","y-axis")
-  .call(d3.axisLeft(yScale).ticks(6).tickFormat(d => (d*100).toFixed(0)+"%"))
-  .call(g => g.select(".domain").attr("stroke","#ddd"))
-  .call(g => g.selectAll(".tick line").attr("stroke","#ddd"))
-  .call(g => g.selectAll(".tick text").attr("fill","#666").attr("font-size","11px"));
-
-// Median crosshairs
 const xMid = d3.median(DATA, d => d.MarketingScore);
 const yMid = d3.median(DATA, d => d.ResponsePropensity);
 
-svg.append("line")
-  .attr("x1",xScale(xMid)).attr("x2",xScale(xMid))
-  .attr("y1",0).attr("y2",height)
-  .attr("stroke","#ccc").attr("stroke-dasharray","5,4").attr("stroke-width",1);
-svg.append("line")
-  .attr("x1",0).attr("x2",width)
-  .attr("y1",yScale(yMid)).attr("y2",yScale(yMid))
-  .attr("stroke","#ccc").attr("stroke-dasharray","5,4").attr("stroke-width",1);
-
-// Quadrant labels
 const qp = 8;
-svg.append("text").attr("class","quadrant-label").attr("x",xScale(xMid)+qp).attr("y",qp+12).text("HIGH PRIORITY");
-svg.append("text").attr("class","quadrant-label").attr("x",qp).attr("y",qp+12).text("WARM LEADS");
-svg.append("text").attr("class","quadrant-label").attr("x",xScale(xMid)+qp).attr("y",height-qp).text("RECONSIDER");
-svg.append("text").attr("class","quadrant-label").attr("x",qp).attr("y",height-qp).text("LOW PRIORITY");
 
 // Axis labels
 svg.append("text").attr("class","axis-label")
@@ -214,8 +215,6 @@ svg.append("text").attr("class","axis-label")
 svg.append("text").attr("class","axis-label")
   .attr("transform","rotate(-90)").attr("x",-height/2).attr("y",-54)
   .attr("text-anchor","middle").text("Response Propensity");
-
-const regressionG = svg.append("g").attr("class","regression-lines");
 
 // Linear regression helper
 function linReg(data) {
@@ -228,12 +227,63 @@ function linReg(data) {
   return { slope, intercept };
 }
 
-function drawRegression(filtered) {
+function renderAxes(transform) {
+  const zx = transform.rescaleX(xBaseScale);
+  const zy = transform.rescaleY(yBaseScale);
+
+  yGridG
+    .call(d3.axisLeft(zy).ticks(6).tickSize(-width).tickFormat(""))
+    .call(g => g.select(".domain").remove())
+    .call(g => g.selectAll(".tick line").attr("stroke", "#ebebeb").attr("stroke-dasharray", "3,3"));
+
+  xGridG
+    .call(d3.axisBottom(zx).ticks(7).tickSize(-height).tickFormat(""))
+    .call(g => g.select(".domain").remove())
+    .call(g => g.selectAll(".tick line").attr("stroke", "#ebebeb").attr("stroke-dasharray", "3,3"));
+
+  xAxisG
+    .call(d3.axisBottom(zx).ticks(7).tickFormat(d3.format(".2f")))
+    .call(g => g.select(".domain").attr("stroke", "#ddd"))
+    .call(g => g.selectAll(".tick line").attr("stroke", "#ddd"))
+    .call(g => g.selectAll(".tick text").attr("fill", "#666").attr("font-size", "11px"));
+
+  yAxisG
+    .call(d3.axisLeft(zy).ticks(6).tickFormat(d => (d * 100).toFixed(0) + "%"))
+    .call(g => g.select(".domain").attr("stroke", "#ddd"))
+    .call(g => g.selectAll(".tick line").attr("stroke", "#ddd"))
+    .call(g => g.selectAll(".tick text").attr("fill", "#666").attr("font-size", "11px"));
+}
+
+function renderReferences(transform) {
+  const zx = transform.rescaleX(xBaseScale);
+  const zy = transform.rescaleY(yBaseScale);
+
+  crosshairG.selectAll("*").remove();
+  quadrantG.selectAll("*").remove();
+
+  crosshairG.append("line")
+    .attr("x1", zx(xMid)).attr("x2", zx(xMid))
+    .attr("y1", 0).attr("y2", height)
+    .attr("stroke", "#ccc").attr("stroke-dasharray", "5,4").attr("stroke-width", 1);
+
+  crosshairG.append("line")
+    .attr("x1", 0).attr("x2", width)
+    .attr("y1", zy(yMid)).attr("y2", zy(yMid))
+    .attr("stroke", "#ccc").attr("stroke-dasharray", "5,4").attr("stroke-width", 1);
+
+  quadrantG.append("text").attr("class", "quadrant-label").attr("x", zx(xMid) + qp).attr("y", qp + 12).text("HIGH PRIORITY");
+  quadrantG.append("text").attr("class", "quadrant-label").attr("x", qp).attr("y", qp + 12).text("WARM LEADS");
+  quadrantG.append("text").attr("class", "quadrant-label").attr("x", zx(xMid) + qp).attr("y", height - qp).text("RECONSIDER");
+  quadrantG.append("text").attr("class", "quadrant-label").attr("x", qp).attr("y", height - qp).text("LOW PRIORITY");
+}
+
+function drawRegression(filtered, transform) {
   regressionG.selectAll("*").remove();
   if (!document.getElementById("toggle-regression").checked) return;
 
-  const xMin = xScale.domain()[0];
-  const xMax = xScale.domain()[1];
+  const zx = transform.rescaleX(xBaseScale);
+  const zy = transform.rescaleY(yBaseScale);
+  const [xMin, xMax] = zx.domain();
 
   ["Yes", "No"].forEach(sub => {
     const pts = filtered
@@ -247,16 +297,16 @@ function drawRegression(filtered) {
     const color = sub === "Yes" ? COLOR_YES : COLOR_NO;
 
     regressionG.append("line")
-      .attr("x1", xScale(xMin)).attr("y1", yScale(y1))
-      .attr("x2", xScale(xMax)).attr("y2", yScale(y2))
+      .attr("x1", zx(xMin)).attr("y1", zy(y1))
+      .attr("x2", zx(xMax)).attr("y2", zy(y2))
       .attr("stroke", color)
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "7,4")
       .attr("opacity", 0.85);
 
     // Label at right end
-    const labelX = xScale(xMax) - 6;
-    const labelY = yScale(y2);
+    const labelX = zx(xMax) - 6;
+    const labelY = zy(y2);
     regressionG.append("text")
       .attr("x", labelX).attr("y", labelY - 5)
       .attr("text-anchor", "end")
@@ -267,14 +317,20 @@ function drawRegression(filtered) {
   });
 }
 
-const bubblesG = svg.append("g");
+let currentTransform = d3.zoomIdentity;
+let currentFiltered = DATA;
 
 function drawBubbles(filtered) {
+  currentFiltered = filtered;
+
   // Sort so Yes renders on top
   const sorted = [...filtered].sort((a,b) =>
     a.TermDepositSubscribed === b.TermDepositSubscribed ? 0 :
     a.TermDepositSubscribed === 'No' ? -1 : 1
   );
+
+  const zx = currentTransform.rescaleX(xBaseScale);
+  const zy = currentTransform.rescaleY(yBaseScale);
 
   bubblesG.selectAll(".bubble").remove();
 
@@ -282,11 +338,11 @@ function drawBubbles(filtered) {
     .data(sorted)
     .enter().append("circle")
     .attr("class","bubble")
-    .attr("cx", d => xScale(d.MarketingScore))
-    .attr("cy", d => yScale(d.ResponsePropensity))
+    .attr("cx", d => zx(d.MarketingScore))
+    .attr("cy", d => zy(d.ResponsePropensity))
     .attr("r",  d => rScale(d.WealthScore))
     .attr("fill",   d => d.TermDepositSubscribed === "Yes" ? COLOR_YES : COLOR_NO)
-    .attr("stroke", d => d.TermDepositSubscribed === "No" ? COLOR_YES_STROKE : COLOR_NO_STROKE)
+    .attr("stroke", d => d.TermDepositSubscribed === "Yes" ? COLOR_YES_STROKE : COLOR_NO_STROKE)
     .attr("stroke-width", 0.5)
     .attr("opacity", 0.5)
     .style("cursor","pointer")
@@ -313,7 +369,7 @@ function drawBubbles(filtered) {
       tooltip.classed("visible",false);
     });
 
-  drawRegression(filtered);
+  drawRegression(filtered, currentTransform);
 
   // Stats
   const total = filtered.length;
@@ -330,6 +386,23 @@ function drawBubbles(filtered) {
     "<div class='stat'><strong>" + avgRP + "%</strong>Avg response propensity</div>"
   );
 }
+
+function syncZoom(transform) {
+  currentTransform = transform;
+  renderAxes(transform);
+  renderReferences(transform);
+  drawBubbles(currentFiltered);
+}
+
+const zoom = d3.zoom()
+  .scaleExtent([1, 8])
+  .translateExtent([[0, 0], [width, height]])
+  .extent([[0, 0], [width, height]])
+  .on("start", () => svgRoot.style("cursor", "grabbing"))
+  .on("zoom", event => syncZoom(event.transform))
+  .on("end", () => svgRoot.style("cursor", "grab"));
+
+svgRoot.call(zoom).style("cursor", "grab");
 
 function applyFilters() {
   const seg  = document.getElementById("filter-segment").value;
@@ -351,12 +424,22 @@ document.getElementById("reset-btn").addEventListener("click", () => {
   document.getElementById("filter-risk").value = "All";
   document.getElementById("filter-job").value = "All";
   document.getElementById("toggle-regression").checked = true;
+  svgRoot.call(zoom.transform, d3.zoomIdentity);
   applyFilters();
 });
 
 document.getElementById("toggle-regression").addEventListener("change", applyFilters);
+document.getElementById("zoom-in").addEventListener("click", () => {
+  svgRoot.transition().duration(180).call(zoom.scaleBy, 1.25);
+});
+document.getElementById("zoom-out").addEventListener("click", () => {
+  svgRoot.transition().duration(180).call(zoom.scaleBy, 0.8);
+});
+document.getElementById("reset-zoom").addEventListener("click", () => {
+  svgRoot.transition().duration(220).call(zoom.transform, d3.zoomIdentity);
+});
 
-drawBubbles(DATA);
+syncZoom(d3.zoomIdentity);
 </script>
 </body>
 </html>
